@@ -153,11 +153,12 @@ d3.json("simple-aus.json", function(error, simple) {
       .style("fill", function(d) { return d.key; })
       .attr("d", function(d) { return path({type: "FeatureCollection", features: d.values}); })
   
-  .on("mouseover", function(d) {		
+   
+ /* .on("mouseover", function(d) {		
             div.transition()		
                 .duration(100)		
                 .style("opacity", .9);		
-            div.html(/*x(d.domain) +*/ "<br>" + "Elevation: " + d.scale)	
+            div.html(x(d.domain) + "<br>" + "Elevation: " + d.scale)	
                 .style("left", (d3.event.pageX) + "px")		
                 .style("top", (d3.event.pageY - 28) + "px")
             })					
@@ -165,7 +166,7 @@ d3.json("simple-aus.json", function(error, simple) {
             div.transition()		
                 .duration(500)		
                 .style("opacity", 0)	
-        });
+        });*/
  
         
   // Draw county borders.
@@ -192,7 +193,7 @@ index.html<br/>
 Simple-aus.json<br/>   
 README<br/>
 <br/>
-Data Source:<br/>  
+Data Source:<br/>  git
 <a href="https://data.gov.au/dataset?q=topology&tags=geology&res_format=SHP&sort=extras_harvest_portal+asc%2C+score+desc%2C+metadata_modified+desc&page=1">data.gov.au</a> <br/>
 <br/>
 Code Source:<br/>
