@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+
+svg {
+  font: 10px sans-serif;
+}
+
+.caption {
+  font-weight: bold;
+}
+
+.key path {
+  display: none;
+}
+
+.key line {
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
+
+.county-border {
+  fill: none;
+  stroke: #000;
+  stroke-opacity: .3;
+}
+
+</style>
+<head>
+    <h1 style="text-align:center; color:#081d58"><bold>Australia Topography </bold></h1>
+</head>
+<body>
+<script src="//d3js.org/d3.v3.min.js"></script>
+<script src="//d3js.org/topojson.v1.min.js"></script>
+<script>
+
+var width = 960,
+    height = 1100;
+
+var formatNumber = d3.format(",d");
+    
+var projection = d3.geo.mercator()
+    .center([133.5, -21.49])/*
+    .rotate([7, 7])
+    .parallels([-4, 10])*/
+    .scale(1000)
+    .translate([width / 2, height / 2]);
+
+var path = d3.geo.path()
+    .projection(projection);
+    
+var color = d3.scale.ordinal()
+    .domain([1, 2, 3, 4, 5, 6, 7])
+    .range(['#3288bd','#99d594','#e6f598','#ffffbf','#fee08b','#fee08b','#d53e4f']);
+
+// A position encoding for the key only.
+var x = d3.scale.linear()
+    .domain([0, 7])
+    .range([0, 480]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom")
+    .tickSize(13)
+    .tickValues(color.domain())
+    .tickFormat(function(d) { return formatNumber(d); });
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+    
+var div = d3.select("body").append("div")	
+        .attr("class", "tooltip")				
+        .style("opacity", 0) 
+
+var g = svg.append("g")
+    .attr("class", "key")
+    .attr("transform", "translate(440,40)");
+
+g.selectAll("rect")
+    .data(color.range().map(function(d, i) {
+      return {
+        x0: i ? x(color.domain()[i - 1]) : x.range()[0],
+        x1: i < color.domain().length ? x(color.domain()[i]) : x.range()[1],
+        z: d
+      };
+    }))
+  .enter().append("rect")
+    .attr("height", 8)
+    .attr("x", function(d) { return d.x0; })
+    .attr("width", function(d) { return d.x1 - d.x0; })
+    .style("fill", function(d) { return d.z; });
+
+g.call(xAxis).append("text")
+    .attr("class", "caption")
+    .attr("y", -6)
+    .text("Elevation");
+
+g.call(xAxis).append("text")
+    .attr("class", "colorButton")
+    .attr("y", 50)
+    //.text("Different Color")
+    .on("click", function()
+        {color.range(["#fff7ec", "#fee8c8", "#fdd49e", "#fdbb84", "#fc8d59", "#ef6548", "#d7301f", "#b30000", "#7f0000"]);
+        d3.selectAll("path").data.style("fill",function(d){return d.key})
+                           });
+    
+d3.json("simple-aus.json", function(error, simple) {
+  if (error) throw error;
+
+  var tracts = topojson.feature(simple, simple.objects.aus25cgd_r);
+
+  // Clip tracts to land.
+  svg.append("defs").append("clipPath")
+      .attr("id", "clip-land")
+    .append("path")
+      .datum(topojson.feature(simple, simple.objects.aus25cgd_r))
+      .attr("d", path);
+
+  // Group tracts by color for faster rendering.
+  svg.append("g")
+      .attr("class", "tract")
+      .attr("clip-path", "url(#clip-land)")
+    .selectAll("path")
+      .data(d3.nest()
+        .key(function(d) { return color(d.properties.elevation); })
+        .entries(tracts.features.filter(function(d) { return d.properties.elevation; }))
+       /*.on("mouseover", function(d) {		//done when mouse hovers over a circle, initiates intro to tooltip
+            div.transition()		
+                .duration(100)	//200 sec to transition	
+                .style("opacity", .9);		//appears, but there is some transparency
+            div	.html("<br>"+ d.country + //adds info
+                      "<br>"+ "Population: "+d.population+ " Million"+   
+                      "<br>"+ "GDP: $"+ d.gdp+" Trillion"+
+                      "<br>"+ "EPC: "+ d.epc +" Million BTUs"+
+                      "<br>"+ "Total: "+ d.total+ "Trillion BTUs")	
+                .style("left", (d3.event.pageX)+ "px")	//positions the tooltip on the screen by grabbing xy coords of the ouse when event takes place	
+                .style("top", (d3.event.pageY - 28)+ "px");	//raises y position up by 28 pixels (hwihc is height of tooltip)
+            })					
+        .on("mouseout", function(d) {	//done when mouse hover off a circle, fades out the div element
+            div.transition()		
+                .duration(500)		//500 secs to return opactiy to 0
+                .style("opacity", 0);	})*/)
+    .enter().append("path")
+      .style("fill", function(d) { return d.key; })
+      .attr("d", function(d) { return path({type: "FeatureCollection", features: d.values}); });
+
+  // Draw county borders.
+  svg.append("path")
+      .datum(topojson.mesh(simple, simple.objects.aus25cgd_r, function(a, b) { return a !== b; }))
+      .attr("class", "county-border")
+      .attr("d", path);
+});
+
+d3.select(self.frameElement).style("height", height + "px");
+
+
+</script>
+<p><text>Richa Goyal</text></p>
+<p><text>Miriam Ali</text></p>
+<p><text>Instructor: Suresh Lodha</text></p>
+<p><text>CMPS165: Data programming for Visualization</text></p>
+<p><text>Fall 2016</text></p>
